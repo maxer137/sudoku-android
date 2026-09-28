@@ -46,6 +46,7 @@ class MainActivity : ComponentActivity() {
                                 game = current,
                                 modifier = Modifier.padding(innerPadding),
                                 onGameChange = updateGame,
+                                onExit = { inGame = false },
                                 settings = settings,
                                 onSettingsChange = {
                                     settings = it

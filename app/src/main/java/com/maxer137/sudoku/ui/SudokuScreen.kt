@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -23,6 +24,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,6 +58,7 @@ fun SudokuScreen(
     game: SavedGame,
     modifier: Modifier = Modifier,
     onGameChange: (SavedGame) -> Unit = {},
+    onExit: () -> Unit = {},
     settings: Settings = Settings(),
     onSettingsChange: (Settings) -> Unit = {},
 ) {
@@ -65,16 +68,19 @@ fun SudokuScreen(
     var timer by remember { mutableStateOf(GameTimer(accumulatedMs = game.elapsedMs)) }
     var isResumed by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
+    var fillResult by remember { mutableStateOf<FillResult?>(null) }
 
     fun updateTimer() {
         val now = SystemClock.elapsedRealtime()
-        timer = if (isResumed && !showSettings) timer.start(now) else timer.pause(now)
+        val isPlaying = isResumed && !showSettings && !sudoku.isSolved
+        timer = if (isPlaying) timer.start(now) else timer.pause(now)
         onGameChange(game.copy(sudoku = sudoku, elapsedMs = timer.elapsedMs(now)))
     }
 
     fun updateSudoku(new: Sudoku) {
         sudoku = new
-        onGameChange(game.copy(sudoku = sudoku, elapsedMs = timer.elapsedMs(SystemClock.elapsedRealtime())))
+        if (new.isFull) fillResult = if (new.isSolved) FillResult.Solved else FillResult.Mistakes
+        updateTimer()
     }
 
     fun setShowSettings(show: Boolean) {
@@ -133,6 +139,41 @@ fun SudokuScreen(
             settings = settings,
             onSettingsChange = onSettingsChange,
             onDismiss = { setShowSettings(false) },
+        )
+    }
+
+    fillResult?.let { result ->
+        FillResultDialog(
+            result = result,
+            elapsedMs = timer.elapsedMs(SystemClock.elapsedRealtime()),
+            onDismiss = { fillResult = null },
+            onExit = onExit,
+        )
+    }
+}
+
+private enum class FillResult { Solved, Mistakes }
+
+@Composable
+private fun FillResultDialog(
+    result: FillResult,
+    elapsedMs: Long,
+    onDismiss: () -> Unit,
+    onExit: () -> Unit,
+) {
+    when (result) {
+        FillResult.Solved -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("Congratulations!") },
+            text = { Text("You solved the puzzle in ${formatElapsed(elapsedMs)}.") },
+            confirmButton = { TextButton(onClick = onExit) { Text("Main menu") } },
+            dismissButton = { TextButton(onClick = onDismiss) { Text("Close") } },
+        )
+        FillResult.Mistakes -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("Not quite") },
+            text = { Text("The grid is full, but there are mistakes. Keep looking!") },
+            confirmButton = { TextButton(onClick = onDismiss) { Text("OK") } },
         )
     }
 }
