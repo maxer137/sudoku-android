@@ -53,6 +53,25 @@ data class Sudoku(
         return with(row, col, if (updated.isEmpty()) Cell.Empty else Cell.Notes(updated))
     }
 
+    /** Every cell whose digit also appears elsewhere in its row, column or 3x3 box. */
+    fun conflicts(): Set<Pos> {
+        val positions = (0 until SIZE).flatMap { r -> (0 until SIZE).map { c -> Pos(r, c) } }
+        // each unit is keyed by (kind, index) so row 0 and column 0 don't collide
+        val units = listOf<(Pos) -> Any>(
+            { Pair("row", it.row) },
+            { Pair("col", it.col) },
+            { Pair("box", it.row / 3 * 3 + it.col / 3) },
+        )
+        return units.flatMap { unitOf ->
+            positions
+                .filter { this[it.row, it.col].digitOrNull != null }
+                .groupBy { Pair(unitOf(it), this[it.row, it.col].digitOrNull) }
+                .values
+                .filter { it.size > 1 }
+                .flatten()
+        }.toSet()
+    }
+
     companion object {
         const val SIZE = 9
 
