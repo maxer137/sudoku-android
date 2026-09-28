@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -101,10 +102,7 @@ fun SudokuScreen(
         selected?.let { updateSudoku(sudoku.with(it.row, it.col, cell)) }
     }
 
-    Column(
-        modifier = modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
+    val header: @Composable () -> Unit = {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (settings.showTimer) TimerText(timer)
             Spacer(Modifier.weight(1f))
@@ -112,14 +110,19 @@ fun SudokuScreen(
                 Icon(painterResource(R.drawable.ic_settings), contentDescription = "Settings")
             }
         }
+    }
+    val grid: @Composable (Modifier) -> Unit = { gridModifier ->
         SudokuGrid(
             sudoku = sudoku,
             selected = selected,
             onCellClick = { selected = it },
+            modifier = gridModifier,
             highlightRowAndColumn = settings.highlightRowAndColumn,
             highlightSameDigits = settings.highlightSameDigits,
             showConflicts = settings.showConflicts,
         )
+    }
+    val numberPad: @Composable () -> Unit = {
         NumberPad(
             notesMode = notesMode,
             onDigit = { d ->
@@ -132,6 +135,34 @@ fun SudokuScreen(
             onClear = { setSelected(Cell.Empty) },
             onToggleNotes = { notesMode = !notesMode },
         )
+    }
+
+    BoxWithConstraints(modifier.padding(ScreenPadding)) {
+        // use whichever arrangement leaves the most room for the grid, so a
+        // phone in landscape or an unfolded foldable doesn't push the pad off screen
+        val stackedGridSize = minOf(maxWidth, maxHeight - HeaderHeight - NumberPadHeight - Gap * 2)
+        val sideGridSize = minOf(maxWidth - NumberPadMinWidth - Gap, maxHeight)
+        if (sideGridSize > stackedGridSize) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Gap),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                grid(Modifier.size(sideGridSize.coerceAtLeast(0.dp)))
+                Column(Modifier.weight(1f).fillMaxHeight()) {
+                    header()
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { numberPad() }
+                }
+            }
+        } else {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(Gap),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                header()
+                grid(Modifier.size(stackedGridSize.coerceAtLeast(0.dp)))
+                numberPad()
+            }
+        }
     }
 
     if (showSettings) {
@@ -151,6 +182,13 @@ fun SudokuScreen(
         )
     }
 }
+
+private val ScreenPadding = 16.dp
+private val Gap = 16.dp
+// rough sizes of the controls, only used to decide how to arrange the screen
+private val HeaderHeight = 48.dp
+private val NumberPadHeight = 160.dp
+private val NumberPadMinWidth = 280.dp
 
 private enum class FillResult { Solved, Mistakes }
 
