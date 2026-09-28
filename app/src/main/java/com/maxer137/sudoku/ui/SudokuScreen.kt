@@ -23,17 +23,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.maxer137.sudoku.data.Cell
 import com.maxer137.sudoku.data.Digit
 import com.maxer137.sudoku.data.Pos
 import com.maxer137.sudoku.data.Sudoku
+import com.maxer137.sudoku.data.digitOrNull
 import com.maxer137.sudoku.ui.theme.SudokuTheme
 
 @Composable
 fun SudokuScreen(modifier: Modifier = Modifier) {
-    var sudoku by remember { mutableStateOf(Sudoku.randomSolved()) }
+    var sudoku by remember { mutableStateOf(Sudoku.puzzle()) }
     var selected by remember { mutableStateOf<Pos?>(null) }
 
     fun setSelected(cell: Cell) {
@@ -116,11 +118,11 @@ private fun SudokuCell(
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        val text = when (cell) {
-            Cell.Empty -> ""
-            is Cell.Filled -> cell.digit.value.toString()
-        }
-        Text(text = text, style = MaterialTheme.typography.titleLarge)
+        Text(
+            text = cell.digitOrNull?.value?.toString() ?: "",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = if (cell is Cell.Given) FontWeight.Bold else FontWeight.Normal,
+        )
     }
 }
 

@@ -59,15 +59,28 @@ data class Sudoku(
         /** A random valid solved grid. */
         fun randomSolved(random: Random = Random.Default): Sudoku {
             val digits = (1..9).shuffled(random)
+
             // shuffle the 3 bands, and the rows within each band (same for columns)
             fun order() = (0..2).shuffled(random).flatMap { g ->
                 (0..2).shuffled(random).map { g * 3 + it }
             }
+
             val rows = order()
             val cols = order()
             return Sudoku(rows.map { r ->
                 cols.map { c ->
                     Cell.Filled(Digit(digits[(3 * (r % 3) + r / 3 + c) % 9]))
+                }
+            })
+        }
+
+        fun puzzle(clues: Int = 30, random: Random = Random.Default): Sudoku {
+            val solved = randomSolved(random)
+            val keep = (0 until SIZE * SIZE).shuffled(random).take(clues).toSet()
+            return Sudoku(List(SIZE) { r ->
+                List(SIZE) { c ->
+                    val digit = solved[r, c].digitOrNull
+                    if (r * SIZE + c in keep && digit != null) Cell.Given(digit) else Cell.Empty
                 }
             })
         }
