@@ -13,6 +13,8 @@ data class Settings(
     val showConflicts: Boolean = true,
     /** Show how long the player has been actively working on the puzzle. */
     val showTimer: Boolean = true,
+    /** On screens wide enough to put the grid beside the number pad, put the pad on the left. */
+    val numberPadOnLeft: Boolean = false,
 )
 
 /** Loads and saves [Settings] across app restarts. */
@@ -26,6 +28,7 @@ class SettingsStore(context: Context) {
             highlightSameDigits = prefs.getBoolean(KEY_SAME_DIGITS, defaults.highlightSameDigits),
             showConflicts = prefs.getBoolean(KEY_CONFLICTS, defaults.showConflicts),
             showTimer = prefs.getBoolean(KEY_TIMER, defaults.showTimer),
+            numberPadOnLeft = prefs.getBoolean(KEY_PAD_LEFT, defaults.numberPadOnLeft),
         )
     }
 
@@ -34,6 +37,7 @@ class SettingsStore(context: Context) {
         putBoolean(KEY_SAME_DIGITS, settings.highlightSameDigits)
         putBoolean(KEY_CONFLICTS, settings.showConflicts)
         putBoolean(KEY_TIMER, settings.showTimer)
+        putBoolean(KEY_PAD_LEFT, settings.numberPadOnLeft)
     }
 
     private companion object {
@@ -41,5 +45,6 @@ class SettingsStore(context: Context) {
         const val KEY_SAME_DIGITS = "highlight_same_digits"
         const val KEY_CONFLICTS = "show_conflicts"
         const val KEY_TIMER = "show_timer"
+        const val KEY_PAD_LEFT = "number_pad_on_left"
     }
 }
