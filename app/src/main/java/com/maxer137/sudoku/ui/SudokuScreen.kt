@@ -67,6 +67,7 @@ fun SudokuScreen(
     onSettingsChange: (Settings) -> Unit = {},
 ) {
     var sudoku by remember { mutableStateOf(game.sudoku) }
+    var history by remember { mutableStateOf(emptyList<Sudoku>()) }
     var selected by remember { mutableStateOf<Pos?>(null) }
     var notesMode by remember { mutableStateOf(false) }
     var timer by remember { mutableStateOf(GameTimer(accumulatedMs = game.elapsedMs)) }
@@ -82,8 +83,19 @@ fun SudokuScreen(
     }
 
     fun updateSudoku(new: Sudoku) {
+        if (new == sudoku) return
+        history = history + sudoku
         sudoku = new
         if (new.isFull) fillResult = if (new.isSolved) FillResult.Solved else FillResult.Mistakes
+        updateTimer()
+    }
+
+    val canUndo = history.isNotEmpty() && !sudoku.isSolved
+
+    fun undo() {
+        if (!canUndo) return
+        sudoku = history.last()
+        history = history.dropLast(1)
         updateTimer()
     }
 
@@ -109,6 +121,9 @@ fun SudokuScreen(
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (settings.showTimer) TimerText(timer)
             Spacer(Modifier.weight(1f))
+            IconButton(onClick = { undo() }, enabled = canUndo) {
+                Icon(painterResource(R.drawable.ic_undo), contentDescription = "Undo")
+            }
             IconButton(onClick = { setShowSettings(true) }) {
                 Icon(painterResource(R.drawable.ic_settings), contentDescription = "Settings")
             }
