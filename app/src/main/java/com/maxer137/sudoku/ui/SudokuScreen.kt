@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -40,6 +42,7 @@ fun SudokuScreen(modifier: Modifier = Modifier) {
         target = Difficulty.MEDIUM
     )) }
     var selected by remember { mutableStateOf<Pos?>(null) }
+    var notesMode by remember { mutableStateOf(false) }
 
     fun setSelected(cell: Cell) {
         selected?.let { sudoku = sudoku.with(it.row, it.col, cell) }
@@ -55,8 +58,16 @@ fun SudokuScreen(modifier: Modifier = Modifier) {
             onCellClick = { selected = it },
         )
         NumberPad(
-            onDigit = { setSelected(Cell.Filled(Digit(it))) },
+            notesMode = notesMode,
+            onDigit = { d ->
+                if (notesMode) {
+                    selected?.let { sudoku = sudoku.toggleNote(it.row, it.col, Digit(d)) }
+                } else {
+                    setSelected(Cell.Filled(Digit(d)))
+                }
+            },
             onClear = { setSelected(Cell.Empty) },
+            onToggleNotes = { notesMode = !notesMode },
         )
     }
 }
@@ -127,18 +138,46 @@ private fun SudokuCell(
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = cell.digitOrNull?.value?.toString() ?: "",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = if (cell is Cell.Given) FontWeight.Bold else FontWeight.Normal,
-        )
+        if (cell is Cell.Notes) {
+            NotesGrid(cell.digits)
+        } else {
+            Text(
+                text = cell.digitOrNull?.value?.toString() ?: "",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = if (cell is Cell.Given) FontWeight.Bold else FontWeight.Normal,
+            )
+        }
+    }
+}
+
+@Composable
+private fun NotesGrid(digits: Set<Digit>, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxSize().padding(1.dp)) {
+        for (r in 0 until 3) {
+            Row(Modifier.weight(1f)) {
+                for (c in 0 until 3) {
+                    val digit = Digit(r * 3 + c + 1)
+                    Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
+                        if (digit in digits) {
+                            Text(
+                                text = digit.value.toString(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
 @Composable
 private fun NumberPad(
+    notesMode: Boolean,
     onDigit: (Int) -> Unit,
     onClear: () -> Unit,
+    onToggleNotes: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -151,8 +190,19 @@ private fun NumberPad(
                 }
             }
         }
-        OutlinedButton(onClick = onClear, modifier = Modifier.fillMaxWidth()) {
-            Text("Clear")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = onClear, modifier = Modifier.weight(1f)) {
+                Text("Clear")
+            }
+            if (notesMode) {
+                FilledTonalButton(onClick = onToggleNotes, modifier = Modifier.weight(1f)) {
+                    Text("Notes: on")
+                }
+            } else {
+                OutlinedButton(onClick = onToggleNotes, modifier = Modifier.weight(1f)) {
+                    Text("Notes: off")
+                }
+            }
         }
     }
 }
