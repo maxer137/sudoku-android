@@ -13,7 +13,18 @@ data class Digit(val value: Int) {
 sealed interface Cell {
     data object Empty: Cell
     data class Filled(val digit: Digit) : Cell
+    data class Given(val digit: Digit) : Cell
 }
+
+val Cell.digitOrNull: Digit?
+    get() = when (this) {
+        Cell.Empty -> null
+        is Cell.Filled -> digit
+        is Cell.Given -> digit
+    }
+
+val Cell.isEditable: Boolean
+    get() = this !is Cell.Given
 
 data class Sudoku(
     val data: List<List<Cell>>
@@ -26,10 +37,12 @@ data class Sudoku(
 
     operator fun get(row: Int, col: Int): Cell = data[row][col]
 
-    fun with(row: Int, col: Int, cell: Cell): Sudoku =
-        copy(data = data.mapIndexed { r, line ->
+    fun with(row: Int, col: Int, cell: Cell): Sudoku {
+        if (!this[row, col].isEditable) return this   // locked, ignore
+        return copy(data = data.mapIndexed { r, line ->
             if (r == row) line.mapIndexed { c, old -> if (c == col) cell else old } else line
         })
+    }
 
     companion object {
         const val SIZE = 9
