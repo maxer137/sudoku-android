@@ -19,8 +19,12 @@ data class SavedGame(
     }
 }
 
-/** The seed of the [index]th puzzle played on [date] (`yyyyMMdd`)*/
-fun dailySeed(date: String, index: Int): String = if (index == 0) date else "$date$index"
+/**
+ * The seed of the [index]th [difficulty] puzzle played on [date] (`yyyyMMdd`): the difficulty's
+ * level, then the date, then the index from the second puzzle on.
+ */
+fun dailySeed(date: String, difficulty: Difficulty, index: Int): String =
+    "${difficulty.level}$date" + if (index == 0) "" else "$index"
 
 /** One token per cell, row by row: `.` empty, `g5` given, `f5` filled, `n135` notes. */
 fun Sudoku.encode(): String =
@@ -78,7 +82,7 @@ class GameStore(context: Context) {
             }
             putInt(countKey(difficulty), index + 1)
         }
-        return dailySeed(today, index)
+        return dailySeed(today, difficulty, index)
     }
 
     private companion object {

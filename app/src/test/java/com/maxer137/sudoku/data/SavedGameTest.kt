@@ -4,16 +4,30 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
+private fun Sudoku.toIntArray() = data.flatten().map { it.digitOrNull?.value ?: 0 }.toIntArray()
+
 class SavedGameTest {
     @Test
-    fun dailySeed_firstPuzzleIsJustTheDate() {
-        assertEquals("20260928", dailySeed("20260928", 0))
+    fun dailySeed_firstPuzzleIsLevelAndDate() {
+        assertEquals("120260928", dailySeed("20260928", Difficulty.EASY, 0))
+        assertEquals("320260928", dailySeed("20260928", Difficulty.HARD, 0))
     }
 
     @Test
     fun dailySeed_laterPuzzlesAppendTheirIndex() {
-        assertEquals("202609281", dailySeed("20260928", 1))
-        assertEquals("2026092812", dailySeed("20260928", 12))
+        assertEquals("2202609281", dailySeed("20260928", Difficulty.MEDIUM, 1))
+        assertEquals("22026092812", dailySeed("20260928", Difficulty.MEDIUM, 12))
+    }
+
+    @Test
+    fun new_difficultiesOfTheSameDayHaveDifferentSolutions() {
+        val date = "20260928"
+        val solutions = Difficulty.entries.map { difficulty ->
+            LogicSolver(SavedGame.new(difficulty, dailySeed(date, difficulty, 0)).sudoku.toIntArray())
+                .apply { rate(difficulty.level) }
+                .values.toList()
+        }
+        assertEquals(solutions.size, solutions.toSet().size)
     }
 
     @Test
