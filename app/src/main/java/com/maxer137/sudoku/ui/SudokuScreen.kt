@@ -1,5 +1,6 @@
 package com.maxer137.sudoku.ui
 
+import android.os.SystemClock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,7 +19,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -28,13 +31,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.maxer137.sudoku.data.Cell
 import com.maxer137.sudoku.data.Difficulty
 import com.maxer137.sudoku.data.Digit
+import com.maxer137.sudoku.data.GameTimer
 import com.maxer137.sudoku.data.Pos
 import com.maxer137.sudoku.data.Sudoku
 import com.maxer137.sudoku.data.digitOrNull
 import com.maxer137.sudoku.ui.theme.SudokuTheme
+import kotlinx.coroutines.delay
 
 @Composable
 fun SudokuScreen(modifier: Modifier = Modifier) {
@@ -43,6 +49,13 @@ fun SudokuScreen(modifier: Modifier = Modifier) {
     )) }
     var selected by remember { mutableStateOf<Pos?>(null) }
     var notesMode by remember { mutableStateOf(false) }
+    var timer by remember { mutableStateOf(GameTimer()) }
+
+    // only count time while the game is in front of the player
+    LifecycleResumeEffect(Unit) {
+        timer = timer.start(SystemClock.elapsedRealtime())
+        onPauseOrDispose { timer = timer.pause(SystemClock.elapsedRealtime()) }
+    }
 
     fun setSelected(cell: Cell) {
         selected?.let { sudoku = sudoku.with(it.row, it.col, cell) }
@@ -52,6 +65,7 @@ fun SudokuScreen(modifier: Modifier = Modifier) {
         modifier = modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        TimerText(timer)
         SudokuGrid(
             sudoku = sudoku,
             selected = selected,
@@ -191,6 +205,34 @@ private fun NotesGrid(digits: Set<Digit>, highlighted: Digit?, modifier: Modifie
             }
         }
     }
+}
+
+/**
+ * Shows [timer]'s elapsed time. Rather than polling, it sleeps until the displayed
+ * second actually changes, and stops waking up entirely while the timer is paused.
+ */
+@Composable
+private fun TimerText(timer: GameTimer, modifier: Modifier = Modifier) {
+    var elapsedMs by remember { mutableLongStateOf(timer.elapsedMs(SystemClock.elapsedRealtime())) }
+    LaunchedEffect(timer) {
+        elapsedMs = timer.elapsedMs(SystemClock.elapsedRealtime())
+        while (timer.isRunning) {
+            delay(1000 - elapsedMs % 1000)
+            elapsedMs = timer.elapsedMs(SystemClock.elapsedRealtime())
+        }
+    }
+    Text(
+        text = formatElapsed(elapsedMs),
+        style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
+        modifier = modifier,
+    )
+}
+
+/** `m:ss`, or `h:mm:ss` once past the hour. */
+private fun formatElapsed(ms: Long): String {
+    val total = ms / 1000
+    val (h, m, s) = Triple(total / 3600, total / 60 % 60, total % 60)
+    return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
 }
 
 @Composable
