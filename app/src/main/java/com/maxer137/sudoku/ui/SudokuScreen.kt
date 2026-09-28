@@ -329,8 +329,8 @@ private fun SudokuCell(
             .background(
                 when (highlight) {
                     Highlight.Selected -> colors.primaryContainer
-                    Highlight.SameDigit -> colors.primary.copy(alpha = 0.3f)
-                    Highlight.Peer -> colors.primary.copy(alpha = 0.1f)
+                    Highlight.SameDigit -> colors.primary.copy(alpha = 0.5f)
+                    Highlight.Peer -> colors.primary.copy(alpha = 0.3f)
                     Highlight.None -> Color.Transparent
                 }
             )
