@@ -105,6 +105,7 @@ fun SudokuScreen(
             onCellClick = { selected = it },
             highlightRowAndColumn = settings.highlightRowAndColumn,
             highlightSameDigits = settings.highlightSameDigits,
+            showConflicts = settings.showConflicts,
         )
         NumberPad(
             notesMode = notesMode,

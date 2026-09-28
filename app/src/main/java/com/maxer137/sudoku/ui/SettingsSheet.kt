@@ -38,6 +38,11 @@ fun SettingsSheet(
                 onCheckedChange = { onSettingsChange(settings.copy(highlightSameDigits = it)) },
             )
             SettingSwitch(
+                label = "Show conflicting numbers",
+                checked = settings.showConflicts,
+                onCheckedChange = { onSettingsChange(settings.copy(showConflicts = it)) },
+            )
+            SettingSwitch(
                 label = "Show timer",
                 checked = settings.showTimer,
                 onCheckedChange = { onSettingsChange(settings.copy(showTimer = it)) },
