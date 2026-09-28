@@ -38,13 +38,6 @@ class LogicSolver(puzzle: IntArray) {
     }
 
     // Level 1
-    private fun nakedSingle(): Boolean {
-        for (i in 0 until 81) if (values[i] == 0 && Integer.bitCount(cand[i]) == 1) {
-            place(i, Integer.numberOfTrailingZeros(cand[i]) + 1); return true
-        }
-        return false
-    }
-
     private fun hiddenSingle(): Boolean {
         for (u in UNITS) for (d in 1..9) {
             val spots = u.filter { values[it] == 0 && cand[it] and bit(d) != 0 }
@@ -54,6 +47,13 @@ class LogicSolver(puzzle: IntArray) {
     }
 
     // Level 2
+    private fun nakedSingle(): Boolean {
+        for (i in 0 until 81) if (values[i] == 0 && Integer.bitCount(cand[i]) == 1) {
+            place(i, Integer.numberOfTrailingZeros(cand[i]) + 1); return true
+        }
+        return false
+    }
+
     private fun nakedPair(): Boolean {
         var changed = false
         for (u in UNITS) {
@@ -110,8 +110,8 @@ class LogicSolver(puzzle: IntArray) {
     }
 
     private val techniques: List<Pair<Int, () -> Boolean>> = listOf(
-        1 to ::nakedSingle, 1 to ::hiddenSingle,
-        2 to ::nakedPair,   2 to ::lockedCandidates,
+        1 to ::hiddenSingle,
+        2 to ::nakedSingle, 2 to ::nakedPair, 2 to ::lockedCandidates,
         3 to ::xWing,
         // add XY-Wing, Swordfish, coloring... as level 3
     )
