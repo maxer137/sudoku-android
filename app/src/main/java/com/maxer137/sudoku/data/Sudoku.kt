@@ -72,6 +72,12 @@ data class Sudoku(
         }.toSet()
     }
 
+    val isFull: Boolean
+        get() = data.all { line -> line.all { it.digitOrNull != null } }
+
+    val isSolved: Boolean
+        get() = isFull && conflicts().isEmpty()
+
     companion object {
         const val SIZE = 9
 
