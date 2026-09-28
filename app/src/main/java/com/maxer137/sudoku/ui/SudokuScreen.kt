@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.maxer137.sudoku.data.Cell
+import com.maxer137.sudoku.data.Difficulty
 import com.maxer137.sudoku.data.Digit
 import com.maxer137.sudoku.data.Pos
 import com.maxer137.sudoku.data.Sudoku
@@ -35,7 +36,9 @@ import com.maxer137.sudoku.ui.theme.SudokuTheme
 
 @Composable
 fun SudokuScreen(modifier: Modifier = Modifier) {
-    var sudoku by remember { mutableStateOf(Sudoku.puzzle()) }
+    var sudoku by remember { mutableStateOf(Sudoku.puzzle(
+        target = Difficulty.MEDIUM
+    )) }
     var selected by remember { mutableStateOf<Pos?>(null) }
 
     fun setSelected(cell: Cell) {

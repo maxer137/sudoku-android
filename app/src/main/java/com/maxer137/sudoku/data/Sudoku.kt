@@ -74,15 +74,28 @@ data class Sudoku(
             })
         }
 
-        fun puzzle(clues: Int = 30, random: Random = Random.Default): Sudoku {
-            val solved = randomSolved(random)
-            val keep = (0 until SIZE * SIZE).shuffled(random).take(clues).toSet()
-            return Sudoku(List(SIZE) { r ->
-                List(SIZE) { c ->
-                    val digit = solved[r, c].digitOrNull
-                    if (r * SIZE + c in keep && digit != null) Cell.Given(digit) else Cell.Empty
+        fun puzzle(target: Difficulty, random: Random = Random.Default): Sudoku {
+            while (true) {
+                val solved = randomSolved(random)
+                val grid = IntArray(81) { solved[it / SIZE, it % SIZE].digitOrNull?.value ?: 0 }
+
+                for (i in (0 until 81).shuffled(random)) {
+                    val d = grid[i]
+                    grid[i] = 0
+                    // keep the removal only if a solver capped at the target tier still finishes it
+                    if (LogicSolver(grid).rate(target.level) == null) grid[i] = d
                 }
-            })
+
+                // floor check: the puzzle must actually need the target tier
+                if (LogicSolver(grid).rate(target.level) != target.level) continue
+
+                return Sudoku(List(SIZE) { r ->
+                    List(SIZE) { c ->
+                        val v = grid[r * SIZE + c]
+                        if (v != 0) Cell.Given(Digit(v)) else Cell.Empty
+                    }
+                })
+            }
         }
     }
 }
