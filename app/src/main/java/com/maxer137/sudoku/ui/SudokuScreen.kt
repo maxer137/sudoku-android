@@ -90,7 +90,9 @@ fun SudokuGrid(
                                         cell = sudoku[row, col],
                                         isSelected = pos == selected,
                                         onClick = { onCellClick(pos) },
-                                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .fillMaxHeight(),
                                     )
                                 }
                             }
@@ -113,7 +115,11 @@ private fun SudokuCell(
         modifier = modifier
             .border(0.5.dp, MaterialTheme.colorScheme.outline)
             .background(
-                if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
+                when {
+                    isSelected -> MaterialTheme.colorScheme.primaryContainer
+                    cell is Cell.Given -> MaterialTheme.colorScheme.secondaryContainer
+                    else -> Color.Transparent
+                }
             )
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
