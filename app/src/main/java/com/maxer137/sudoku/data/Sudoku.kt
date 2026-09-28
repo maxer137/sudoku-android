@@ -14,6 +14,7 @@ sealed interface Cell {
     data object Empty: Cell
     data class Filled(val digit: Digit) : Cell
     data class Given(val digit: Digit) : Cell
+    data class Notes(val digits: Set<Digit>) : Cell
 }
 
 val Cell.digitOrNull: Digit?
@@ -21,6 +22,7 @@ val Cell.digitOrNull: Digit?
         Cell.Empty -> null
         is Cell.Filled -> digit
         is Cell.Given -> digit
+        is Cell.Notes -> null
     }
 
 val Cell.isEditable: Boolean
@@ -42,6 +44,13 @@ data class Sudoku(
         return copy(data = data.mapIndexed { r, line ->
             if (r == row) line.mapIndexed { c, old -> if (c == col) cell else old } else line
         })
+    }
+
+    /** Adds [digit] to the cell's notes, or removes it if already noted. */
+    fun toggleNote(row: Int, col: Int, digit: Digit): Sudoku {
+        val notes = (this[row, col] as? Cell.Notes)?.digits.orEmpty()
+        val updated = if (digit in notes) notes - digit else notes + digit
+        return with(row, col, if (updated.isEmpty()) Cell.Empty else Cell.Notes(updated))
     }
 
     companion object {
