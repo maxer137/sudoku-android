@@ -1,0 +1,40 @@
+Sudoku
+Copyright (C) 2026 maxer137 and contributors
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option)
+any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+more details.
+
+You should have received a copy of the GNU General Public License along
+with this program (see the LICENSE file). If not, see
+<https://www.gnu.org/licenses/>.
+
+SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-App-Store-Exception
+
+
+Additional permission under GNU GPL version 3 section 7
+-------------------------------------------------------
+
+As an additional permission under section 7 of the GNU General Public
+License, the copyright holders of this program give you permission to
+convey this program, or any covered work based on it, through an
+application store or similar distribution service (for example the Apple
+App Store or Google Play), even if the terms of that service impose
+restrictions on recipients that would otherwise be incompatible with the
+GNU General Public License, such as limits on the number of devices the
+work may be installed on, usage rules, or digital rights management.
+
+This permission applies only if, for every copy conveyed through such a
+service, the Corresponding Source of the work is made available to its
+recipients under the terms of the GNU General Public License together with
+this additional permission.
+
+If you modify this program, you may extend this additional permission to
+your version, but you are not obligated to do so. If you do not wish to
+do so, delete this additional permission from your version.
