@@ -2,6 +2,8 @@ package com.maxer137.sudoku.data
 
 import kotlin.random.Random
 
+data class Pos(val row: Int, val col: Int)
+
 data class Digit(val value: Int) {
     init {
         require(value in 1..9) { "Value of cell must be 1..9, got $value"}
