@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             var settings by remember { mutableStateOf(settingsStore.load()) }
             var game by remember { mutableStateOf(gameStore.load()) }
-            var inGame by rememberSaveable { mutableStateOf(game != null) }
+            var inGame by rememberSaveable { mutableStateOf(game?.sudoku?.isSolved == false) }
             val updateGame = { new: SavedGame ->
                 game = new
                 gameStore.save(new)
@@ -61,7 +61,7 @@ class MainActivity : ComponentActivity() {
                                 inGame = true
                             },
                             modifier = Modifier.padding(innerPadding),
-                            continueDifficulty = current?.difficulty,
+                            continueDifficulty = current?.takeUnless { it.sudoku.isSolved }?.difficulty,
                             onContinue = { inGame = true },
                         )
                     }
