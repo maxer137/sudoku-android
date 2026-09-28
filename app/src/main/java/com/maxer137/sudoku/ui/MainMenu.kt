@@ -7,7 +7,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,7 +28,9 @@ fun MainMenu(
     modifier: Modifier = Modifier,
     continueDifficulty: Difficulty? = null,
     onContinue: () -> Unit = {},
+    generating: Difficulty? = null,
 ) {
+    val enabled = generating == null
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -36,12 +41,16 @@ fun MainMenu(
         Text("Sudoku", style = MaterialTheme.typography.displayMedium)
         Spacer(Modifier.height(16.dp))
         if (continueDifficulty != null) {
-            FilledTonalButton(onClick = onContinue, modifier = Modifier.fillMaxWidth()) {
+            FilledTonalButton(onClick = onContinue, modifier = Modifier.fillMaxWidth(), enabled = enabled) {
                 Text("Continue (${continueDifficulty.label})")
             }
         }
         Difficulty.entries.forEach { difficulty ->
-            Button(onClick = { onStart(difficulty) }, modifier = Modifier.fillMaxWidth()) {
+            Button(onClick = { onStart(difficulty) }, modifier = Modifier.fillMaxWidth(), enabled = enabled) {
+                if (difficulty == generating) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(8.dp))
+                }
                 Text(difficulty.label)
             }
         }
