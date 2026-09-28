@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -28,33 +31,55 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.maxer137.sudoku.R
 import com.maxer137.sudoku.data.Cell
 import com.maxer137.sudoku.data.Difficulty
 import com.maxer137.sudoku.data.Digit
 import com.maxer137.sudoku.data.GameTimer
 import com.maxer137.sudoku.data.Pos
+import com.maxer137.sudoku.data.Settings
 import com.maxer137.sudoku.data.Sudoku
 import com.maxer137.sudoku.data.digitOrNull
 import com.maxer137.sudoku.ui.theme.SudokuTheme
 import kotlinx.coroutines.delay
 
 @Composable
-fun SudokuScreen(modifier: Modifier = Modifier) {
+fun SudokuScreen(
+    modifier: Modifier = Modifier,
+    settings: Settings = Settings(),
+    onSettingsChange: (Settings) -> Unit = {},
+) {
     var sudoku by remember { mutableStateOf(Sudoku.puzzle(
         target = Difficulty.MEDIUM
     )) }
     var selected by remember { mutableStateOf<Pos?>(null) }
     var notesMode by remember { mutableStateOf(false) }
     var timer by remember { mutableStateOf(GameTimer()) }
+    var isResumed by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
 
-    // only count time while the game is in front of the player
+    fun updateTimer() {
+        val now = SystemClock.elapsedRealtime()
+        timer = if (isResumed && !showSettings) timer.start(now) else timer.pause(now)
+    }
+
+    fun setShowSettings(show: Boolean) {
+        showSettings = show
+        updateTimer()
+    }
+
     LifecycleResumeEffect(Unit) {
-        timer = timer.start(SystemClock.elapsedRealtime())
-        onPauseOrDispose { timer = timer.pause(SystemClock.elapsedRealtime()) }
+        isResumed = true
+        updateTimer()
+        onPauseOrDispose {
+            isResumed = false
+            updateTimer()
+        }
     }
 
     fun setSelected(cell: Cell) {
@@ -65,11 +90,19 @@ fun SudokuScreen(modifier: Modifier = Modifier) {
         modifier = modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        TimerText(timer)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (settings.showTimer) TimerText(timer)
+            Spacer(Modifier.weight(1f))
+            IconButton(onClick = { setShowSettings(true) }) {
+                Icon(painterResource(R.drawable.ic_settings), contentDescription = "Settings")
+            }
+        }
         SudokuGrid(
             sudoku = sudoku,
             selected = selected,
             onCellClick = { selected = it },
+            highlightRowAndColumn = settings.highlightRowAndColumn,
+            highlightSameDigits = settings.highlightSameDigits,
         )
         NumberPad(
             notesMode = notesMode,
@@ -82,6 +115,14 @@ fun SudokuScreen(modifier: Modifier = Modifier) {
             },
             onClear = { setSelected(Cell.Empty) },
             onToggleNotes = { notesMode = !notesMode },
+        )
+    }
+
+    if (showSettings) {
+        SettingsSheet(
+            settings = settings,
+            onSettingsChange = onSettingsChange,
+            onDismiss = { setShowSettings(false) },
         )
     }
 }
