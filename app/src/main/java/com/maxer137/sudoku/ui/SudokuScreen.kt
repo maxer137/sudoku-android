@@ -8,14 +8,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -122,8 +125,9 @@ fun SudokuScreen(
             showConflicts = settings.showConflicts,
         )
     }
-    val numberPad: @Composable () -> Unit = {
+    val numberPad: @Composable (columns: Int, Modifier) -> Unit = { columns, padModifier ->
         NumberPad(
+            columns = columns,
             notesMode = notesMode,
             onDigit = { d ->
                 if (notesMode) {
@@ -134,34 +138,42 @@ fun SudokuScreen(
             },
             onClear = { setSelected(Cell.Empty) },
             onToggleNotes = { notesMode = !notesMode },
+            modifier = padModifier,
         )
     }
 
     BoxWithConstraints(modifier.padding(ScreenPadding)) {
-        // use whichever arrangement leaves the most room for the grid, so a
-        // phone in landscape or an unfolded foldable doesn't push the pad off screen
-        val stackedGridSize = minOf(maxWidth, maxHeight - HeaderHeight - NumberPadHeight - Gap * 2)
-        val sideGridSize = minOf(maxWidth - NumberPadMinWidth - Gap, maxHeight)
-        if (sideGridSize > stackedGridSize) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(Gap),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (!settings.numberPadOnLeft) grid(Modifier.size(sideGridSize.coerceAtLeast(0.dp)))
+        if (maxWidth > maxHeight) {
+            // grid and pad each get their own half,
+            // so on a foldable neither crosses the crease
+            val halfWidth = (maxWidth - Gap) / 2
+            val gridSize = minOf(halfWidth, maxHeight)
+            val padAlignment = if (settings.numberPadOnLeft) Alignment.BottomStart else Alignment.BottomEnd
+            Row(horizontalArrangement = Arrangement.spacedBy(Gap)) {
+                val gridHalf = @Composable {
+                    Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
+                        grid(Modifier.size(gridSize))
+                    }
+                }
+                if (!settings.numberPadOnLeft) gridHalf()
                 Column(Modifier.weight(1f).fillMaxHeight()) {
                     header()
-                    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { numberPad() }
+                    Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = padAlignment) {
+                        numberPad(3, Modifier.width(minOf(KeypadWidth, halfWidth)))
+                    }
                 }
-                if (settings.numberPadOnLeft) grid(Modifier.size(sideGridSize.coerceAtLeast(0.dp)))
+                if (settings.numberPadOnLeft) gridHalf()
             }
         } else {
+            // shrink the grid when the screen is too short to fit everything
+            val gridSize = minOf(maxWidth, maxHeight - HeaderHeight - NumberPadHeight - Gap * 2)
             Column(
                 verticalArrangement = Arrangement.spacedBy(Gap),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 header()
-                grid(Modifier.size(stackedGridSize.coerceAtLeast(0.dp)))
-                numberPad()
+                grid(Modifier.size(gridSize.coerceAtLeast(0.dp)))
+                numberPad(5, Modifier)
             }
         }
     }
@@ -186,10 +198,11 @@ fun SudokuScreen(
 
 private val ScreenPadding = 16.dp
 private val Gap = 16.dp
-// rough sizes of the controls, only used to decide how to arrange the screen
+private val KeyHeight = 48.dp
+// rough sizes of the controls, only used to fit the grid around them
 private val HeaderHeight = 48.dp
-private val NumberPadHeight = 160.dp
-private val NumberPadMinWidth = 280.dp
+private val NumberPadHeight = KeyHeight * 3 + 8.dp * 2
+private val KeypadWidth = 240.dp
 
 private enum class FillResult { Solved, Mistakes }
 
@@ -381,8 +394,12 @@ private fun formatElapsed(ms: Long): String {
     return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
 }
 
+// less than the default, so "Notes: off" still fits on one line in the keypad
+private val WideKeyPadding = PaddingValues(horizontal = 8.dp)
+
 @Composable
 private fun NumberPad(
+    columns: Int,
     notesMode: Boolean,
     onDigit: (Int) -> Unit,
     onClear: () -> Unit,
@@ -390,25 +407,25 @@ private fun NumberPad(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        (1..9).chunked(5).forEach { digits ->
+        (1..9).chunked(columns).forEach { digits ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 digits.forEach { d ->
-                    Button(onClick = { onDigit(d) }, modifier = Modifier.weight(1f)) {
+                    Button(onClick = { onDigit(d) }, modifier = Modifier.weight(1f).height(KeyHeight)) {
                         Text(d.toString())
                     }
                 }
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = onClear, modifier = Modifier.weight(1f)) {
+            OutlinedButton(onClick = onClear, modifier = Modifier.weight(1f).height(KeyHeight), contentPadding = WideKeyPadding) {
                 Text("Clear")
             }
             if (notesMode) {
-                FilledTonalButton(onClick = onToggleNotes, modifier = Modifier.weight(1f)) {
+                FilledTonalButton(onClick = onToggleNotes, modifier = Modifier.weight(1f).height(KeyHeight), contentPadding = WideKeyPadding) {
                     Text("Notes: on")
                 }
             } else {
-                OutlinedButton(onClick = onToggleNotes, modifier = Modifier.weight(1f)) {
+                OutlinedButton(onClick = onToggleNotes, modifier = Modifier.weight(1f).height(KeyHeight), contentPadding = WideKeyPadding) {
                     Text("Notes: off")
                 }
             }
