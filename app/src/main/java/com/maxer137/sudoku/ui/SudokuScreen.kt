@@ -146,6 +146,7 @@ fun SudokuScreen(
         NumberPad(
             columns = columns,
             notesMode = notesMode,
+            completedDigits = sudoku.completedDigits(),
             onDigit = { d ->
                 if (notesMode) {
                     selected?.let { updateSudoku(sudoku.toggleNote(it.row, it.col, Digit(d))) }
@@ -418,6 +419,7 @@ private val WideKeyPadding = PaddingValues(horizontal = 8.dp)
 private fun NumberPad(
     columns: Int,
     notesMode: Boolean,
+    completedDigits: Set<Digit>,
     onDigit: (Int) -> Unit,
     onClear: () -> Unit,
     onToggleNotes: () -> Unit,
@@ -427,7 +429,11 @@ private fun NumberPad(
         (1..9).chunked(columns).forEach { digits ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 digits.forEach { d ->
-                    Button(onClick = { onDigit(d) }, modifier = Modifier.weight(1f).height(KeyHeight)) {
+                    Button(
+                        onClick = { onDigit(d) },
+                        enabled = Digit(d) !in completedDigits,
+                        modifier = Modifier.weight(1f).height(KeyHeight),
+                    ) {
                         Text(d.toString())
                     }
                 }

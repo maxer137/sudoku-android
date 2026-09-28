@@ -72,6 +72,11 @@ data class Sudoku(
         }.toSet()
     }
 
+    fun completedDigits(): Set<Digit> =
+        data.flatten().mapNotNull { it.digitOrNull }
+            .groupingBy { it }.eachCount()
+            .filterValues { it >= SIZE }.keys
+
     val isFull: Boolean
         get() = data.all { line -> line.all { it.digitOrNull != null } }
 
