@@ -44,6 +44,7 @@ import com.maxer137.sudoku.data.Difficulty
 import com.maxer137.sudoku.data.Digit
 import com.maxer137.sudoku.data.GameTimer
 import com.maxer137.sudoku.data.Pos
+import com.maxer137.sudoku.data.SavedGame
 import com.maxer137.sudoku.data.Settings
 import com.maxer137.sudoku.data.Sudoku
 import com.maxer137.sudoku.data.digitOrNull
@@ -52,21 +53,28 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun SudokuScreen(
+    game: SavedGame,
     modifier: Modifier = Modifier,
-    difficulty: Difficulty = Difficulty.MEDIUM,
+    onGameChange: (SavedGame) -> Unit = {},
     settings: Settings = Settings(),
     onSettingsChange: (Settings) -> Unit = {},
 ) {
-    var sudoku by remember { mutableStateOf(Sudoku.puzzle(target = difficulty)) }
+    var sudoku by remember { mutableStateOf(game.sudoku) }
     var selected by remember { mutableStateOf<Pos?>(null) }
     var notesMode by remember { mutableStateOf(false) }
-    var timer by remember { mutableStateOf(GameTimer()) }
+    var timer by remember { mutableStateOf(GameTimer(accumulatedMs = game.elapsedMs)) }
     var isResumed by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
 
     fun updateTimer() {
         val now = SystemClock.elapsedRealtime()
         timer = if (isResumed && !showSettings) timer.start(now) else timer.pause(now)
+        onGameChange(game.copy(sudoku = sudoku, elapsedMs = timer.elapsedMs(now)))
+    }
+
+    fun updateSudoku(new: Sudoku) {
+        sudoku = new
+        onGameChange(game.copy(sudoku = sudoku, elapsedMs = timer.elapsedMs(SystemClock.elapsedRealtime())))
     }
 
     fun setShowSettings(show: Boolean) {
@@ -84,7 +92,7 @@ fun SudokuScreen(
     }
 
     fun setSelected(cell: Cell) {
-        selected?.let { sudoku = sudoku.with(it.row, it.col, cell) }
+        selected?.let { updateSudoku(sudoku.with(it.row, it.col, cell)) }
     }
 
     Column(
@@ -110,7 +118,7 @@ fun SudokuScreen(
             notesMode = notesMode,
             onDigit = { d ->
                 if (notesMode) {
-                    selected?.let { sudoku = sudoku.toggleNote(it.row, it.col, Digit(d)) }
+                    selected?.let { updateSudoku(sudoku.toggleNote(it.row, it.col, Digit(d))) }
                 } else {
                     setSelected(Cell.Filled(Digit(d)))
                 }
@@ -331,5 +339,5 @@ private fun NumberPad(
 @Preview(showBackground = true)
 @Composable
 private fun SudokuScreenPreview() {
-    SudokuTheme { SudokuScreen() }
+    SudokuTheme { SudokuScreen(game = SavedGame.new(Difficulty.MEDIUM, "20260928")) }
 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,6 +23,8 @@ import com.maxer137.sudoku.ui.theme.SudokuTheme
 fun MainMenu(
     onStart: (Difficulty) -> Unit,
     modifier: Modifier = Modifier,
+    continueDifficulty: Difficulty? = null,
+    onContinue: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -32,6 +35,11 @@ fun MainMenu(
     ) {
         Text("Sudoku", style = MaterialTheme.typography.displayMedium)
         Spacer(Modifier.height(16.dp))
+        if (continueDifficulty != null) {
+            FilledTonalButton(onClick = onContinue, modifier = Modifier.fillMaxWidth()) {
+                Text("Continue (${continueDifficulty.label})")
+            }
+        }
         Difficulty.entries.forEach { difficulty ->
             Button(onClick = { onStart(difficulty) }, modifier = Modifier.fillMaxWidth()) {
                 Text(difficulty.label)
@@ -50,5 +58,5 @@ private val Difficulty.label: String
 @Preview(showBackground = true)
 @Composable
 private fun MainMenuPreview() {
-    SudokuTheme { MainMenu(onStart = {}) }
+    SudokuTheme { MainMenu(onStart = {}, continueDifficulty = Difficulty.MEDIUM) }
 }

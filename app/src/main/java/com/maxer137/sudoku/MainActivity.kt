@@ -9,12 +9,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.maxer137.sudoku.data.Difficulty
+import com.maxer137.sudoku.data.GameStore
+import com.maxer137.sudoku.data.SavedGame
 import com.maxer137.sudoku.data.SettingsStore
 import com.maxer137.sudoku.ui.MainMenu
 import com.maxer137.sudoku.ui.SudokuScreen
@@ -25,27 +27,41 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val settingsStore = SettingsStore(applicationContext)
+        val gameStore = GameStore(applicationContext)
         setContent {
             var settings by remember { mutableStateOf(settingsStore.load()) }
-            var difficulty by rememberSaveable { mutableStateOf<Difficulty?>(null) }
+            var game by remember { mutableStateOf(gameStore.load()) }
+            var inGame by rememberSaveable { mutableStateOf(game != null) }
+            val updateGame = { new: SavedGame ->
+                game = new
+                gameStore.save(new)
+            }
             SudokuTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    val current = difficulty
-                    if (current == null) {
-                        MainMenu(
-                            onStart = { difficulty = it },
-                            modifier = Modifier.padding(innerPadding),
-                        )
+                    val current = game
+                    if (inGame && current != null) {
+                        BackHandler { inGame = false }
+                        key(current.difficulty, current.seed) {
+                            SudokuScreen(
+                                game = current,
+                                modifier = Modifier.padding(innerPadding),
+                                onGameChange = updateGame,
+                                settings = settings,
+                                onSettingsChange = {
+                                    settings = it
+                                    settingsStore.save(it)
+                                },
+                            )
+                        }
                     } else {
-                        BackHandler { difficulty = null }
-                        SudokuScreen(
-                            modifier = Modifier.padding(innerPadding),
-                            difficulty = current,
-                            settings = settings,
-                            onSettingsChange = {
-                                settings = it
-                                settingsStore.save(it)
+                        MainMenu(
+                            onStart = { difficulty ->
+                                updateGame(SavedGame.new(difficulty, gameStore.nextSeed(difficulty)))
+                                inGame = true
                             },
+                            modifier = Modifier.padding(innerPadding),
+                            continueDifficulty = current?.difficulty,
+                            onContinue = { inGame = true },
                         )
                     }
                 }
