@@ -1,6 +1,9 @@
 package com.maxer137.sudoku.data
 
-enum class Difficulty(val level: Int) { EASY(1), MEDIUM(2), HARD(3) }
+/**
+ * [level] is the hardest technique tier a puzzle may need. [minGivens] stops clue removal early.
+ */
+enum class Difficulty(val level: Int, val minGivens: Int) { EASY(1, 36), MEDIUM(2, 30), HARD(3, 0) }
 
 private val ALL = 0x1FF
 private fun bit(d: Int) = 1 shl (d - 1)

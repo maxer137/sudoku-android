@@ -113,11 +113,14 @@ data class Sudoku(
                 val solved = randomSolved(random)
                 val grid = IntArray(81) { solved[it / SIZE, it % SIZE].digitOrNull?.value ?: 0 }
 
+                var givens = 81
                 for (i in (0 until 81).shuffled(random)) {
                     val d = grid[i]
                     grid[i] = 0
                     // keep the removal only if a solver capped at the target tier still finishes it
-                    if (LogicSolver(grid).rate(target.level) == null) grid[i] = d
+                    val level = LogicSolver(grid).rate(target.level)
+                    if (level == null) { grid[i] = d; continue }
+                    if (--givens <= target.minGivens && level == target.level) break
                 }
 
                 // floor check: the puzzle must actually need the target tier
