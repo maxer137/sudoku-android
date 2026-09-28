@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -135,9 +137,13 @@ fun SudokuGrid(
     modifier: Modifier = Modifier,
     highlightRowAndColumn: Boolean = true,
     highlightSameDigits: Boolean = true,
+    showConflicts: Boolean = true,
 ) {
     val lineColor = MaterialTheme.colorScheme.onSurface
     val selectedDigit = selected?.let { sudoku[it.row, it.col].digitOrNull }
+    val conflicts = remember(sudoku, showConflicts) {
+        if (showConflicts) sudoku.conflicts() else emptySet()
+    }
 
     Column(
         modifier = modifier
@@ -170,6 +176,7 @@ fun SudokuGrid(
                                             else -> Highlight.None
                                         },
                                         noteHighlight = selectedDigit.takeIf { highlightSameDigits },
+                                        isConflict = pos in conflicts,
                                         onClick = { onCellClick(pos) },
                                         modifier = Modifier
                                             .weight(1f)
@@ -192,6 +199,7 @@ private fun SudokuCell(
     cell: Cell,
     highlight: Highlight,
     noteHighlight: Digit?,
+    isConflict: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -218,6 +226,15 @@ private fun SudokuCell(
                 text = cell.digitOrNull?.value?.toString() ?: "",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = if (cell is Cell.Given) FontWeight.Bold else FontWeight.Normal,
+            )
+        }
+        if (isConflict) {
+            Box(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(3.dp)
+                    .size(6.dp)
+                    .background(colors.error, CircleShape)
             )
         }
     }
