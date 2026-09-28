@@ -47,6 +47,11 @@ fun SettingsSheet(
                 checked = settings.showTimer,
                 onCheckedChange = { onSettingsChange(settings.copy(showTimer = it)) },
             )
+            SettingSwitch(
+                label = "Number pad on the left on wide screens",
+                checked = settings.numberPadOnLeft,
+                onCheckedChange = { onSettingsChange(settings.copy(numberPadOnLeft = it)) },
+            )
         }
     }
 }

@@ -147,11 +147,12 @@ fun SudokuScreen(
                 horizontalArrangement = Arrangement.spacedBy(Gap),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                grid(Modifier.size(sideGridSize.coerceAtLeast(0.dp)))
+                if (!settings.numberPadOnLeft) grid(Modifier.size(sideGridSize.coerceAtLeast(0.dp)))
                 Column(Modifier.weight(1f).fillMaxHeight()) {
                     header()
                     Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { numberPad() }
                 }
+                if (settings.numberPadOnLeft) grid(Modifier.size(sideGridSize.coerceAtLeast(0.dp)))
             }
         } else {
             Column(
