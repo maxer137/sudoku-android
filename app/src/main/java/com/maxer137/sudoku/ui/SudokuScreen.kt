@@ -78,8 +78,11 @@ fun SudokuGrid(
     selected: Pos?,
     onCellClick: (Pos) -> Unit,
     modifier: Modifier = Modifier,
+    highlightRowAndColumn: Boolean = true,
+    highlightSameDigits: Boolean = true,
 ) {
     val lineColor = MaterialTheme.colorScheme.onSurface
+    val selectedDigit = selected?.let { sudoku[it.row, it.col].digitOrNull }
 
     Column(
         modifier = modifier
@@ -100,9 +103,18 @@ fun SudokuGrid(
                             Row(Modifier.weight(1f)) {
                                 for (col in boxCol * 3 until boxCol * 3 + 3) {
                                     val pos = Pos(row, col)
+                                    val cell = sudoku[row, col]
                                     SudokuCell(
-                                        cell = sudoku[row, col],
-                                        isSelected = pos == selected,
+                                        cell = cell,
+                                        highlight = when {
+                                            pos == selected -> Highlight.Selected
+                                            highlightSameDigits && selectedDigit != null &&
+                                                cell.digitOrNull == selectedDigit -> Highlight.SameDigit
+                                            highlightRowAndColumn && selected != null &&
+                                                (row == selected.row || col == selected.col) -> Highlight.Peer
+                                            else -> Highlight.None
+                                        },
+                                        noteHighlight = selectedDigit.takeIf { highlightSameDigits },
                                         onClick = { onCellClick(pos) },
                                         modifier = Modifier
                                             .weight(1f)
@@ -118,28 +130,34 @@ fun SudokuGrid(
     }
 }
 
+private enum class Highlight { Selected, SameDigit, Peer, None }
+
 @Composable
 private fun SudokuCell(
     cell: Cell,
-    isSelected: Boolean,
+    highlight: Highlight,
+    noteHighlight: Digit?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val colors = MaterialTheme.colorScheme
     Box(
         modifier = modifier
-            .border(0.5.dp, MaterialTheme.colorScheme.outline)
+            .border(0.5.dp, colors.outline)
+            .background(if (cell is Cell.Given) colors.secondaryContainer else Color.Transparent)
             .background(
-                when {
-                    isSelected -> MaterialTheme.colorScheme.primaryContainer
-                    cell is Cell.Given -> MaterialTheme.colorScheme.secondaryContainer
-                    else -> Color.Transparent
+                when (highlight) {
+                    Highlight.Selected -> colors.primaryContainer
+                    Highlight.SameDigit -> colors.primary.copy(alpha = 0.3f)
+                    Highlight.Peer -> colors.primary.copy(alpha = 0.1f)
+                    Highlight.None -> Color.Transparent
                 }
             )
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         if (cell is Cell.Notes) {
-            NotesGrid(cell.digits)
+            NotesGrid(cell.digits, highlighted = noteHighlight)
         } else {
             Text(
                 text = cell.digitOrNull?.value?.toString() ?: "",
@@ -151,7 +169,7 @@ private fun SudokuCell(
 }
 
 @Composable
-private fun NotesGrid(digits: Set<Digit>, modifier: Modifier = Modifier) {
+private fun NotesGrid(digits: Set<Digit>, highlighted: Digit?, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxSize().padding(1.dp)) {
         for (r in 0 until 3) {
             Row(Modifier.weight(1f)) {
@@ -159,10 +177,13 @@ private fun NotesGrid(digits: Set<Digit>, modifier: Modifier = Modifier) {
                     val digit = Digit(r * 3 + c + 1)
                     Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
                         if (digit in digits) {
+                            val isHighlighted = digit == highlighted
                             Text(
                                 text = digit.value.toString(),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isHighlighted) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
