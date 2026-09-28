@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -55,6 +56,7 @@ import com.maxer137.sudoku.data.Settings
 import com.maxer137.sudoku.data.Sudoku
 import com.maxer137.sudoku.data.digitOrNull
 import com.maxer137.sudoku.ui.theme.SudokuTheme
+import com.maxer137.sudoku.ui.theme.ThemePreviews
 import kotlinx.coroutines.delay
 
 @Composable
@@ -452,4 +454,30 @@ private fun NumberPad(
 @Composable
 private fun SudokuScreenPreview() {
     SudokuTheme { SudokuScreen(game = SavedGame.new(Difficulty.MEDIUM, "20260928")) }
+}
+
+/**
+ * A board showing every cell state at once for preview
+ */
+@ThemePreviews
+@Composable
+private fun SudokuGridColorsPreview() {
+    val puzzle = SavedGame.new(Difficulty.MEDIUM, "20260928").sudoku
+    val positions = (0 until 9).flatMap { r -> (0 until 9).map { c -> Pos(r, c) } }
+    val selected = positions.first { puzzle[it.row, it.col] is Cell.Given }
+    val digit = puzzle[selected.row, selected.col].digitOrNull!!
+    val empties = positions.filter { puzzle[it.row, it.col] == Cell.Empty }
+    val inRow = empties.filter { it.row == selected.row }
+    val elsewhere = empties.filter { it.row != selected.row && it.col != selected.col }
+    val sudoku = puzzle
+        .with(inRow[0].row, inRow[0].col, Cell.Filled(Digit(digit.value % 9 + 1)))
+        .with(inRow[1].row, inRow[1].col, Cell.Filled(digit))
+        .with(inRow[2].row, inRow[2].col, Cell.Notes(setOf(Digit(1), Digit(5), Digit(9))))
+        .with(elsewhere[0].row, elsewhere[0].col, Cell.Notes(setOf(digit, Digit(digit.value % 9 + 1))))
+        .with(elsewhere[1].row, elsewhere[1].col, Cell.Filled(Digit(3)))
+    SudokuTheme {
+        Surface {
+            SudokuGrid(sudoku = sudoku, selected = selected, onCellClick = {}, modifier = Modifier.padding(8.dp))
+        }
+    }
 }
