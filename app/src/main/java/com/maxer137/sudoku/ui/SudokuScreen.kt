@@ -53,12 +53,11 @@ import kotlinx.coroutines.delay
 @Composable
 fun SudokuScreen(
     modifier: Modifier = Modifier,
+    difficulty: Difficulty = Difficulty.MEDIUM,
     settings: Settings = Settings(),
     onSettingsChange: (Settings) -> Unit = {},
 ) {
-    var sudoku by remember { mutableStateOf(Sudoku.puzzle(
-        target = Difficulty.MEDIUM
-    )) }
+    var sudoku by remember { mutableStateOf(Sudoku.puzzle(target = difficulty)) }
     var selected by remember { mutableStateOf<Pos?>(null) }
     var notesMode by remember { mutableStateOf(false) }
     var timer by remember { mutableStateOf(GameTimer()) }
