@@ -431,7 +431,7 @@ private fun NumberPad(
                 digits.forEach { d ->
                     Button(
                         onClick = { onDigit(d) },
-                        enabled = Digit(d) !in completedDigits,
+                        enabled = notesMode || Digit(d) !in completedDigits,
                         modifier = Modifier.weight(1f).height(KeyHeight),
                     ) {
                         Text(d.toString())
