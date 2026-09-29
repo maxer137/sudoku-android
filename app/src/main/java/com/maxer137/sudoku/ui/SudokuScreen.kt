@@ -40,8 +40,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -361,21 +363,34 @@ private fun SudokuCell(
 
 @Composable
 private fun NotesGrid(digits: Set<Digit>, highlighted: Digit?, modifier: Modifier = Modifier) {
-    Column(modifier.fillMaxSize().padding(1.dp)) {
-        for (r in 0 until 3) {
-            Row(Modifier.weight(1f)) {
-                for (c in 0 until 3) {
-                    val digit = Digit(r * 3 + c + 1)
-                    Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
-                        if (digit in digits) {
-                            val isHighlighted = digit == highlighted
-                            Text(
-                                text = digit.value.toString(),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isHighlighted) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+    BoxWithConstraints(modifier.fillMaxSize().padding(1.dp)) {
+        // size the text from the slot rather than a fixed style, since the slots
+        // on a phone are smaller than labelSmall's line height (more so with font scaling)
+        val slotSize = minOf(maxWidth, maxHeight) / 3
+        val fontSize = with(LocalDensity.current) { (slotSize * NoteFontScale).toSp() }
+        val style = MaterialTheme.typography.labelSmall.copy(
+            fontSize = fontSize,
+            lineHeight = fontSize,
+            lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both),
+        )
+        Column(Modifier.fillMaxSize()) {
+            for (r in 0 until 3) {
+                Row(Modifier.weight(1f)) {
+                    for (c in 0 until 3) {
+                        val digit = Digit(r * 3 + c + 1)
+                        Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
+                            if (digit in digits) {
+                                val isHighlighted = digit == highlighted
+                                Text(
+                                    text = digit.value.toString(),
+                                    style = style,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isHighlighted) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
                     }
                 }
@@ -383,6 +398,9 @@ private fun NotesGrid(digits: Set<Digit>, highlighted: Digit?, modifier: Modifie
         }
     }
 }
+
+// fraction of a note slot's height used as font size, leaving a little room between notes
+private const val NoteFontScale = 0.8f
 
 /**
  * Shows [timer]'s elapsed time. Rather than polling, it sleeps until the displayed
