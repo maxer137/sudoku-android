@@ -123,6 +123,9 @@ fun SudokuScreen(
 
     val header: @Composable () -> Unit = {
         Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onExit) {
+                Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = "Back")
+            }
             if (settings.showTimer) TimerText(timer)
             Spacer(Modifier.weight(1f))
             IconButton(onClick = { undo() }, enabled = canUndo) {
